@@ -1,47 +1,73 @@
 import 'package:flutter/material.dart';
-import 'package:github_repositories/screens/main_screen.dart';
-import 'package:github_repositories/screens/search_screen.dart';
+import 'package:github_repositories/data/authentication_repository.dart';
+import 'package:github_repositories/data/repositories_repository.dart';
+import 'package:github_repositories/router/github_repository_router_delegate.dart';
+import 'package:github_repositories/screens/main_screen/main_screen.dart';
+import 'package:github_repositories/view_models/authentication_view_model.dart';
+import 'package:github_repositories/view_models/repositories_view_model.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late GithubRepositoryRouterDelegate routerDelegate;
+  late AuthenticationRepository authenticationRepository;
+  late RepositoriesRepository repositoriesRepository;
+  @override
+  void initState() {
+    super.initState();
+    authenticationRepository = AuthenticationRepository();
+    repositoriesRepository = RepositoriesRepository();
+    routerDelegate = GithubRepositoryRouterDelegate(
+        authenticationRepository, repositoriesRepository);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: const MaterialColor(
-          0xFF000000,
-          <int, Color>{
-            50: Color(0xFF000000),
-            100: Color(0xFF000000),
-            200: Color(0xFF000000),
-            300: Color(0xFF000000),
-            400: Color(0xFF000000),
-            500: Color(0xFF000000),
-            600: Color(0xFF000000),
-            700: Color(0xFF000000),
-            800: Color(0xFF000000),
-            900: Color(0xFF000000),
-          },
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AuthenticationViewModel>(
+          create: (_) => AuthenticationViewModel(authenticationRepository),
+        ),
+        ChangeNotifierProvider<RepositoriesViewModel>(
+          create: (_) => RepositoriesViewModel(repositoriesRepository),
+        ),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Github Repository',
+        theme: ThemeData(
+          primarySwatch: const MaterialColor(
+            0xFF000000,
+            <int, Color>{
+              50: Color(0xFF000000),
+              100: Color(0xFF000000),
+              200: Color(0xFF000000),
+              300: Color(0xFF000000),
+              400: Color(0xFF000000),
+              500: Color(0xFF000000),
+              600: Color(0xFF000000),
+              700: Color(0xFF000000),
+              800: Color(0xFF000000),
+              900: Color(0xFF000000),
+            },
+          ),
+        ),
+        home: Router(
+          routerDelegate: routerDelegate,
+          backButtonDispatcher: RootBackButtonDispatcher(),
         ),
       ),
-      home: const MainScreen(),
     );
   }
 }

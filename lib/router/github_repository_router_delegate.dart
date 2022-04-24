@@ -1,21 +1,64 @@
 import 'package:flutter/material.dart';
+import 'package:github_repositories/data/authentication_repository.dart';
+import 'package:github_repositories/data/repositories_repository.dart';
+import 'package:github_repositories/router/pages/main_page.dart';
+import 'package:github_repositories/router/pages/splash_page.dart';
 
-class GithubRepositoryRouterDelegate extends RouterDelegate {
-  @override
-  void addListener(VoidCallback listener) {
-    // TODO: implement addListener
+class GithubRepositoryRouterDelegate extends RouterDelegate
+    with ChangeNotifier, PopNavigatorRouterDelegateMixin {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  final AuthenticationRepository authenticationRepository;
+  final RepositoriesRepository repositoriesRepository;
+
+  bool? _loggedIn;
+  bool? get loggedIn => _loggedIn;
+  set loggedIn(value) {
+    _loggedIn = value;
+    notifyListeners();
+    print("notify: " + loggedIn.toString());
   }
+
+  List<Page> get _splashStack {
+    return [
+      SplashPage(),
+    ];
+  }
+
+  List<Page> get _loggedInStack => [
+        const MainPage(),
+      ];
+
+  GithubRepositoryRouterDelegate(
+      this.authenticationRepository, this.repositoriesRepository) {
+    _init();
+  }
+
+  _init() async {
+    loggedIn = await authenticationRepository.isUserLoggedIn();
+    print("loggedIn: " + loggedIn.toString());
+  }
+
+  @override
+  GlobalKey<NavigatorState>? get navigatorKey => _navigatorKey;
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<bool> popRoute() {
-    // TODO: implement popRoute
-    throw UnimplementedError();
+    List<Page> stack;
+    final loggedIn = this.loggedIn;
+    if (loggedIn == null) {
+      stack = _splashStack;
+    } else {
+      stack = _loggedInStack;
+    }
+    return Navigator(
+      key: navigatorKey,
+      pages: stack,
+      onPopPage: (route, result) {
+        if (!route.didPop(result)) return false;
+        return true;
+      },
+    );
   }
 
   @override
@@ -24,8 +67,5 @@ class GithubRepositoryRouterDelegate extends RouterDelegate {
   }
 
   @override
-  Future<void> setNewRoutePath(configuration) {
-    // TODO: implement setNewRoutePath
-    throw UnimplementedError();
-  }
+  Future<void> setNewRoutePath(configuration) async {}
 }
