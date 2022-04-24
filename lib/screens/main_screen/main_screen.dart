@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:github_repositories/custom_clippers/clip_shadow_path.dart';
 import 'package:github_repositories/custom_clippers/custom_clippers.dart';
+import 'package:github_repositories/view_models/authentication_view_model.dart';
+import 'package:provider/provider.dart';
 
 const TextStyle _textStyle = TextStyle(
   fontSize: 40,
@@ -24,7 +26,32 @@ class _MainScreenState extends State<MainScreen> {
   ];
   @override
   Widget build(BuildContext context) {
+    AuthenticationViewModel authVM = context.watch<AuthenticationViewModel>();
+    bool? userLoggedIn = authVM.authenticationRepository?.loggedIn;
     return Scaffold(
+      resizeToAvoidBottomInset: false,
+      appBar: AppBar(
+        title: const Text("Github Repository"),
+        actions: [
+          InkWell(
+            onTap: () {
+              AuthenticationViewModel authVM =
+                  context.read<AuthenticationViewModel>();
+              if (userLoggedIn!) {
+                authVM.logout();
+              } else if (!userLoggedIn) {
+                authVM.login();
+              }
+            },
+            child: Container(
+              alignment: Alignment.center,
+              child: Text(
+                userLoggedIn != null && userLoggedIn ? "로그아웃" : "로그인",
+              ),
+            ),
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           ClipShadowPath(
@@ -51,8 +78,39 @@ class _MainScreenState extends State<MainScreen> {
               color: Colors.black,
             ),
           ),
-          Center(
-            child: Container(child: pages[_currentIndex]),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 10,
+            ),
+            child: const TextField(
+              style: TextStyle(color: Colors.white),
+              cursorColor: Colors.white,
+              decoration: InputDecoration(
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+                labelText: "검색",
+                labelStyle: TextStyle(color: Colors.grey),
+                icon: Icon(Icons.search, color: Colors.white),
+              ),
+            ),
+          ),
+          Visibility(
+            visible: authVM.loggingIn || authVM.loggingOut,
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+          Visibility(
+            visible: !authVM.loggingIn && !authVM.loggingOut,
+            child: Center(
+              child: Container(
+                  child: userLoggedIn != null && userLoggedIn
+                      ? pages[_currentIndex]
+                      : const Text("Not Logged In")),
+            ),
           ),
         ],
       ),

@@ -16,7 +16,6 @@ class GithubRepositoryRouterDelegate extends RouterDelegate
   set loggedIn(value) {
     _loggedIn = value;
     notifyListeners();
-    print("notify: " + loggedIn.toString());
   }
 
   List<Page> get _splashStack {
@@ -36,7 +35,6 @@ class GithubRepositoryRouterDelegate extends RouterDelegate
 
   _init() async {
     loggedIn = await authenticationRepository.isUserLoggedIn();
-    print("loggedIn: " + loggedIn.toString());
   }
 
   @override
