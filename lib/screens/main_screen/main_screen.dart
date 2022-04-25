@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:github_repositories/custom_clippers/clip_shadow_path.dart';
 import 'package:github_repositories/custom_clippers/custom_clippers.dart';
 import 'package:github_repositories/view_models/authentication_view_model.dart';
 import 'package:provider/provider.dart';
+import 'package:uni_links/uni_links.dart';
 
 const TextStyle _textStyle = TextStyle(
   fontSize: 40,
@@ -24,6 +27,37 @@ class _MainScreenState extends State<MainScreen> {
     Text('Search', style: _textStyle),
     Text('Profile', style: _textStyle),
   ];
+
+  StreamSubscription? _subs;
+
+  @override
+  void initState() {
+    super.initState();
+    _initDeepLinkListener();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _disposeDeepLinkListener();
+  }
+
+  void _initDeepLinkListener() async {
+    _subs = getLinksStream().listen(
+      (String? link) {
+        context.read<AuthenticationViewModel>().checkDeepLink(link!);
+      },
+      cancelOnError: true,
+    );
+  }
+
+  void _disposeDeepLinkListener() {
+    if (_subs != null) {
+      _subs!.cancel();
+      _subs = null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     AuthenticationViewModel authVM = context.watch<AuthenticationViewModel>();
