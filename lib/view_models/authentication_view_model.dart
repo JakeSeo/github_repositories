@@ -25,17 +25,4 @@ class AuthenticationViewModel extends ChangeNotifier {
     notifyListeners();
     return loggingOut;
   }
-
-  void checkDeepLink(String link) {
-    String code = link.substring(link.indexOf(RegExp('code=')) + 5);
-    authenticationRepository?.authService
-        .loginWithGitHub(code)
-        .then((firebaseUser) {
-      print(firebaseUser!.email);
-      print(firebaseUser.photoURL);
-      print("LOGGED IN AS:  ${firebaseUser.displayName}");
-    }).catchError((e) {
-      print("LOGIN ERROR: " + e.toString());
-    });
-  }
 }
