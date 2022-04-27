@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:github_repositories/data/authentication/github_login_response.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:http/http.dart' as http;
-import '../../secret_keys.dart' as SecretKey;
+import '../../configs.dart' as SecretKey;
 
 class AuthenticationService {
   final auth.FirebaseAuth _firebaseAuth = auth.FirebaseAuth.instance;
@@ -15,8 +15,8 @@ class AuthenticationService {
         "Accept": "application/json"
       },
       body: jsonEncode(GitHubLoginRequest(
-        clientId: SecretKey.GITHUB_CLIENT_ID,
-        clientSecret: SecretKey.GITHUB_CLIENT_SECRET,
+        clientId: SecretKey.githubClientID,
+        clientSecret: SecretKey.githubClientSecret,
         code: code,
       )),
     );

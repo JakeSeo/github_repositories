@@ -8,13 +8,13 @@ class AuthenticationViewModel extends ChangeNotifier {
 
   AuthenticationViewModel(this.authenticationRepository);
 
-  Future<bool> login() async {
+  Future<bool> login(String token) async {
     loggingIn = true;
     notifyListeners();
-    authenticationRepository!.login();
+    final result = await authenticationRepository!.login(token);
     loggingIn = false;
     notifyListeners();
-    return true;
+    return result;
   }
 
   Future<bool> logout() async {

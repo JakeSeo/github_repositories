@@ -1,13 +1,17 @@
+import 'dart:io';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:github_repositories/data/authentication/authentication_service.dart';
-import 'package:github_repositories/data/user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../secret_keys.dart' as SecretKey;
-import 'package:url_launcher/url_launcher.dart';
+import '../../configs.dart' as Configs;
+import 'package:http/http.dart' as http;
 
 const String _AUTH_KEY = 'AuthKey';
 
 class AuthenticationRepository {
   bool? loggedIn;
+  UserCredential? user;
+  String? accessToken;
   AuthenticationRepository();
 
   final AuthenticationService authService = AuthenticationService();
@@ -21,35 +25,46 @@ class AuthenticationRepository {
     return loggedIn;
   }
 
-  Future<bool> _updateLoginStatus(bool loggedIn) {
-    return Future.delayed(const Duration(seconds: 2)).then((value) async {
-      this.loggedIn = loggedIn;
-      SharedPreferences preference = await SharedPreferences.getInstance();
-      return preference.setBool(_AUTH_KEY, loggedIn);
-    });
-  }
-
-  void onClickGitHubLoginButton() async {
-    const String url = "https://github.com/login/oauth/authorize" +
-        "?client_id=" +
-        SecretKey.GITHUB_CLIENT_ID +
-        "&scope=public_repo%20read:user%20user:email";
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(
-        Uri.parse(url),
-      );
-    } else {
-      print("CANNOT LAUNCH THIS URL!");
+  Future<bool> _logout() async {
+    try {
+      FirebaseAuth.instance.signOut();
+    } on Exception catch (e) {
+      print(e);
+      return false;
     }
+    loggedIn = false;
+    return true;
   }
 
-  Future<bool> logout() => _updateLoginStatus(false);
+  Future<bool> _login(String token) async {
+    accessToken = token;
+    print("access token: $accessToken");
+    try {
+      final githubAuthCredential = GithubAuthProvider.credential(token);
+      user = await FirebaseAuth.instance
+          .signInWithCredential(githubAuthCredential);
+    } on Exception catch (e) {
+      print(e);
+      return false;
+    }
+    loggedIn = true;
+    return true;
+  }
 
-  void login() => onClickGitHubLoginButton();
+  Future<bool> logout() => _logout();
 
-  Future<User> getUser() {
-    return Future.delayed(const Duration(seconds: 2)).then((value) {
-      return User();
-    });
+  Future<bool> login(String token) => _login(token);
+
+  Future<void> getUser() async {
+    var url =
+        Uri.parse(Configs.githubAPIURL + Configs.githubAPISearch + "?q=D");
+    var response = await http.get(
+      url,
+      headers: {
+        "Authorization": "token ${accessToken!}",
+      },
+    );
+
+    print("response: ${response.body} ${accessToken}");
   }
 }

@@ -1,11 +1,14 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:github_repositories/custom_clippers/clip_shadow_path.dart';
 import 'package:github_repositories/custom_clippers/custom_clippers.dart';
 import 'package:github_repositories/view_models/authentication_view_model.dart';
+import 'package:github_sign_in/github_sign_in.dart';
 import 'package:provider/provider.dart';
-import 'package:uni_links/uni_links.dart';
+import '../../configs.dart' as Configs;
 
 const TextStyle _textStyle = TextStyle(
   fontSize: 40,
@@ -28,34 +31,28 @@ class _MainScreenState extends State<MainScreen> {
     Text('Profile', style: _textStyle),
   ];
 
-  StreamSubscription? _subs;
-
-  @override
-  void initState() {
-    super.initState();
-    _initDeepLinkListener();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _disposeDeepLinkListener();
-  }
-
-  void _initDeepLinkListener() async {
-    _subs = getLinksStream().listen(
-      (String? link) {
-        context.read<AuthenticationViewModel>().checkDeepLink(link!);
-      },
-      cancelOnError: true,
+  void _onClickLoginButton() async {
+    final GitHubSignIn gitHubSignIn = GitHubSignIn(
+      clientId: Configs.githubClientID,
+      clientSecret: Configs.githubClientSecret,
+      redirectUrl: Configs.githubCallbackURL,
+      clearCache: false,
     );
+
+    // Trigger the sign-in flow
+    final result = await gitHubSignIn.signIn(context);
+
+    AuthenticationViewModel authVM = context.read<AuthenticationViewModel>();
+
+    if (result.token != null) {
+      authVM.login(result.token!);
+    }
   }
 
-  void _disposeDeepLinkListener() {
-    if (_subs != null) {
-      _subs!.cancel();
-      _subs = null;
-    }
+  void _searchRepositories(String searchText) {
+    AuthenticationViewModel authVM = context.read<AuthenticationViewModel>();
+    authVM.authenticationRepository!.getUser();
+    print(searchText);
   }
 
   @override
@@ -68,16 +65,17 @@ class _MainScreenState extends State<MainScreen> {
         title: const Text("Github Repository"),
         actions: [
           InkWell(
-            onTap: () {
+            onTap: () async {
               AuthenticationViewModel authVM =
                   context.read<AuthenticationViewModel>();
               if (userLoggedIn!) {
                 authVM.logout();
               } else if (!userLoggedIn) {
-                authVM.login();
+                _onClickLoginButton();
               }
             },
             child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               alignment: Alignment.center,
               child: Text(
                 userLoggedIn != null && userLoggedIn ? "로그아웃" : "로그인",
@@ -117,7 +115,10 @@ class _MainScreenState extends State<MainScreen> {
               horizontal: 16,
               vertical: 10,
             ),
-            child: const TextField(
+            child: TextField(
+              onChanged: (text) {
+                _searchRepositories(text);
+              },
               style: TextStyle(color: Colors.white),
               cursorColor: Colors.white,
               decoration: InputDecoration(
