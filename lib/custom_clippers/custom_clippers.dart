@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 
 // 출처: https://www.youtube.com/watch?v=P0eZ0XH5FdI&t=16s
 class BigClipper extends CustomClipper<Path> {
+  double? maxHeight;
   @override
   Path getClip(Size size) {
     Path path = Path();
     final double _xScaling = size.width / 414;
     final double _yScaling = size.height / 896;
+    maxHeight = 413.99600000000004 * _yScaling;
     path.lineTo(
         -0.003999999999997783 * _xScaling, 291.78499999999997 * _yScaling);
     path.cubicTo(

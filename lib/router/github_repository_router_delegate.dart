@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:github_repositories/data/authentication/authentication_repository.dart';
+import 'package:github_repositories/data/authentication_repository.dart';
 import 'package:github_repositories/data/repositories_repository.dart';
 import 'package:github_repositories/router/pages/main_page.dart';
 import 'package:github_repositories/router/pages/splash_page.dart';
@@ -34,7 +34,7 @@ class GithubRepositoryRouterDelegate extends RouterDelegate
   }
 
   _init() async {
-    loggedIn = await authenticationRepository.isUserLoggedIn();
+    loggedIn = await authenticationRepository.getSavedAccessToken() != null;
   }
 
   @override

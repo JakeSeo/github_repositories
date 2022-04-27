@@ -1,28 +1,42 @@
 import 'package:flutter/material.dart';
-import 'package:github_repositories/data/authentication/authentication_repository.dart';
+import 'package:github_repositories/data/authentication_repository.dart';
+
+import '../data/custom_user.dart';
 
 class AuthenticationViewModel extends ChangeNotifier {
   AuthenticationRepository? authenticationRepository;
-  bool loggingIn = false;
-  bool loggingOut = false;
+  bool loading = false;
+
+  String? accessToken;
+
+  CustomUser? user;
 
   AuthenticationViewModel(this.authenticationRepository);
 
   Future<bool> login(String token) async {
-    loggingIn = true;
+    loading = true;
     notifyListeners();
     final result = await authenticationRepository!.login(token);
-    loggingIn = false;
+    accessToken = await authenticationRepository?.getSavedAccessToken();
+    loading = false;
     notifyListeners();
     return result;
   }
 
   Future<bool> logout() async {
-    loggingOut = true;
+    loading = true;
     notifyListeners();
     final result = await authenticationRepository!.logout();
-    loggingOut = false;
+    loading = false;
     notifyListeners();
-    return loggingOut;
+    return result;
+  }
+
+  void loadUser() async {
+    loading = true;
+    notifyListeners();
+    user = await authenticationRepository!.getUser();
+    loading = false;
+    notifyListeners();
   }
 }

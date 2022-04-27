@@ -1,24 +1,23 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:github_repositories/data/custom_user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../configs.dart' as Configs;
+import '../configs.dart' as configs;
 import 'package:http/http.dart' as http;
 
 const String _AUTH_KEY = 'AuthKey';
 
 class AuthenticationRepository {
-  bool? loggedIn;
-  UserCredential? user;
-  String? accessToken;
   AuthenticationRepository();
 
-  Future<bool?> isUserLoggedIn() async {
-    loggedIn =
+  Future<String?> getSavedAccessToken() async {
+    String? accessToken =
         await Future.delayed(const Duration(seconds: 2)).then((value) async {
       SharedPreferences preference = await SharedPreferences.getInstance();
-      return preference.getBool(_AUTH_KEY) ?? false;
+      return preference.getString(_AUTH_KEY);
     });
-    return loggedIn;
+    return accessToken;
   }
 
   Future<bool> _logout() async {
@@ -28,22 +27,21 @@ class AuthenticationRepository {
       print(e);
       return false;
     }
-    loggedIn = false;
+    SharedPreferences preference = await SharedPreferences.getInstance();
+    preference.remove(_AUTH_KEY);
     return true;
   }
 
   Future<bool> _login(String token) async {
-    accessToken = token;
-    print("access token: $accessToken");
+    SharedPreferences preference = await SharedPreferences.getInstance();
+    preference.setString(_AUTH_KEY, token);
     try {
       final githubAuthCredential = GithubAuthProvider.credential(token);
-      user = await FirebaseAuth.instance
-          .signInWithCredential(githubAuthCredential);
+      await FirebaseAuth.instance.signInWithCredential(githubAuthCredential);
     } on Exception catch (e) {
       print(e);
       return false;
     }
-    loggedIn = true;
     return true;
   }
 
@@ -51,16 +49,20 @@ class AuthenticationRepository {
 
   Future<bool> login(String token) => _login(token);
 
-  Future<void> getUser() async {
-    var url =
-        Uri.parse(Configs.githubAPIURL + Configs.githubAPISearch + "?q=D");
+  Future<CustomUser?> getUser() async {
+    String? accessToken = await getSavedAccessToken();
+    if (accessToken == null) return null;
+    var url = Uri.parse(configs.githubAPIURL + configs.githubAPIUser);
     var response = await http.get(
       url,
       headers: {
-        "Authorization": "token ${accessToken!}",
+        "Authorization": "token $accessToken",
       },
     );
 
-    print("response: ${response.body} ${accessToken}");
+    var jsonUser = json.decode(response.body);
+    CustomUser user = CustomUser.fromJson(jsonUser);
+
+    return user;
   }
 }

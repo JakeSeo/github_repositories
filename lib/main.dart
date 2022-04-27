@@ -1,6 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:github_repositories/data/authentication/authentication_repository.dart';
+import 'package:github_repositories/data/authentication_repository.dart';
 import 'package:github_repositories/data/repositories_repository.dart';
 import 'package:github_repositories/router/github_repository_router_delegate.dart';
 import 'package:github_repositories/screens/main_screen/main_screen.dart';
